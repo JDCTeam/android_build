@@ -728,7 +728,7 @@ class RamdiskFormat(object):
 def _GetRamdiskFormat(info_dict):
   if info_dict.get('lz4_ramdisks') == 'true':
     ramdisk_format = RamdiskFormat.LZ4
-  if info_dict.get('xz_ramdisks') == 'true':
+  elif info_dict.get('xz_ramdisks') == 'true':
     ramdisk_format = RamdiskFormat.XZ
   else:
     ramdisk_format = RamdiskFormat.GZ
@@ -2684,7 +2684,9 @@ class PasswordManager(object):
               ps = subprocess.Popen(self.secure_storage_cmd, shell=True, stdout=subprocess.PIPE)
               output = ps.communicate()[0]
               if ps.returncode == 0:
-                current[i] = output
+                current[i] = output.decode('utf-8')
+              else:
+                logger.warning('Failed to get password for key "%s".', i)
             except Exception as e:
               print(e)
               pass
@@ -2692,8 +2694,6 @@ class PasswordManager(object):
             missing.append(i)
       # Are all the passwords already in the file?
       if not missing:
-        if "ANDROID_SECURE_STORAGE_CMD" in os.environ:
-          del os.environ["ANDROID_SECURE_STORAGE_CMD"]
         return current
 
       for i in missing:
@@ -3228,7 +3228,8 @@ class BlockDifference(object):
                   write_verify_script=False):
     if not self.src:
       # write the output unconditionally
-      script.Print("Patching %s image unconditionally..." % (self.partition,))
+      script.Print(" ")
+      script.Print("Where is your warranty dude ?")
     else:
       script.Print("Patching %s image after verification." % (self.partition,))
 
@@ -3447,7 +3448,8 @@ PARTITION_TYPES = {
     "ext4": "EMMC",
     "emmc": "EMMC",
     "f2fs": "EMMC",
-    "squashfs": "EMMC"
+    "squashfs": "EMMC",
+    "erofs": "EMMC"
 }
 
 

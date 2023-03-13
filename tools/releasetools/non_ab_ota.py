@@ -220,7 +220,23 @@ else if get_stage("%(bcb_dev)s") == "3/3" then
 
   # Dump fingerprints
   script.Print("Target: {}".format(target_info.fingerprint))
-
+  
+  script.Print("      _____  ___________")
+  script.Print("  __ / / _ \/ ___/_  __/__ ___ ___ _  ")
+  script.Print(" / // / // / /__  / / / -_) _ `/  ' \ ")
+  script.Print(" \___/____/\___/ /_/  \__/\_,_/_/_/_/ ")
+  script.Print(" ")
+  script.Print("Optimized LineageOS 19.1")
+  script.Print(" ")
+  romname = target_info.GetBuildProp("ro.lineage.version")
+  builddate = target_info.GetBuildProp("ro.build.date")
+  script.Print("--------------------------------------")
+  script.Print(" ")
+  script.Print("ROM Version:")
+  script.Print("%s "%(romname));
+  script.Print("Build Date:")
+  script.Print("%s "%(builddate));
+  
   device_specific.FullOTA_InstallBegin()
 
   CopyInstallTools(output_zip)
