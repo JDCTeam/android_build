@@ -226,7 +226,7 @@ else if get_stage("%(bcb_dev)s") == "3/3" then
   script.Print(" / // / // / /__  / / / -_) _ `/  ' \ ")
   script.Print(" \___/____/\___/ /_/  \__/\_,_/_/_/_/ ")
   script.Print(" ")
-  script.Print("Optimized LineageOS 19.1")
+  script.Print("Optimized LineageOS 20.0")
   script.Print(" ")
   romname = target_info.GetBuildProp("ro.lineage.version")
   builddate = target_info.GetBuildProp("ro.build.date")
