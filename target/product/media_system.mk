@@ -27,7 +27,6 @@ PRODUCT_PACKAGES += \
     com.android.media.remotedisplay.xml \
     CompanionDeviceManager \
     drmserver \
-    ethernet-service \
     fsck.f2fs \
     HTMLViewer \
     libfilterpack_imageproc \
@@ -52,8 +51,7 @@ endif
 PRODUCT_SYSTEM_SERVER_JARS := \
     com.android.location.provider \
     services \
-    org.lineageos.platform \
-    ethernet-service
+    org.lineageos.platform
 
 PRODUCT_COPY_FILES += \
     system/core/rootdir/etc/public.libraries.android.txt:system/etc/public.libraries.txt

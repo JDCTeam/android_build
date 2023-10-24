@@ -34,13 +34,9 @@ PRODUCT_PACKAGES += \
     SettingsIntelligence \
     frameworks-base-overlays
 
-ifneq ($(PRODUCT_NO_CAMERA),true)
-PRODUCT_PACKAGES += \
-    Camera2
-endif
-
 ifeq ($(LINEAGE_BUILD),)
 PRODUCT_PACKAGES += \
+    Camera2 \
     LatinIME
 endif
 

@@ -22,9 +22,11 @@
 # Ramdisk
 PRODUCT_PACKAGES += \
     init_first_stage \
+    snapuserd.ramdisk \
 
 # Debug ramdisk
 PRODUCT_PACKAGES += \
+    adb_debug.prop \
     userdebug_plat_sepolicy.cil \
 
 _my_paths := \

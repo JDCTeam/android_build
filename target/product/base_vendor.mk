@@ -25,8 +25,14 @@ PRODUCT_PACKAGES += \
     linker.recovery \
     otacerts.recovery \
     recovery \
+    servicemanager.recovery \
     shell_and_utilities_recovery \
     watchdogd.recovery \
+
+PRODUCT_VENDOR_PROPERTIES += \
+    ro.recovery.usb.vid?=18D1 \
+    ro.recovery.usb.adb.pid?=D001 \
+    ro.recovery.usb.fastboot.pid?=4EE0 \
 
 # These had been pulled in via init_second_stage.recovery, but may not be needed.
 PRODUCT_HOST_PACKAGES += \
@@ -78,7 +84,8 @@ PRODUCT_PACKAGES_SHIPPING_API_LEVEL_29 += \
 PRODUCT_PACKAGES += \
     vendor_compatibility_matrix.xml \
 
-# Packages to update the recovery partition, which will be installed on
-# /vendor. TODO(b/141648565): Don't install these unless they're needed.
+# Base modules and settings for the debug ramdisk, which is then packed
+# into a boot-debug.img and a vendor_boot-debug.img.
 PRODUCT_PACKAGES += \
-    applypatch
+    adb_debug.prop \
+    userdebug_plat_sepolicy.cil

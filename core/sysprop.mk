@@ -49,10 +49,18 @@ define generate-common-build-props
         echo "ro.product.$(1).model=$${PRODUCT_MODEL:-$(PRODUCT_MODEL)}" >> $(2);\
         echo "ro.product.$(1).name=$${TARGET_PRODUCT:-$(TARGET_PRODUCT)}" >> $(2);\
     )\
-    $(if $(filter system vendor odm,$(1)),\
-        echo "ro.$(1).product.cpu.abilist=$(TARGET_CPU_ABI_LIST) " >> $(2);\
-        echo "ro.$(1).product.cpu.abilist32=$(TARGET_CPU_ABI_LIST_32_BIT)" >> $(2);\
-        echo "ro.$(1).product.cpu.abilist64=$(TARGET_CPU_ABI_LIST_64_BIT)" >> $(2);\
+    $(if $(filter true,$(ZYGOTE_FORCE_64)),\
+        $(if $(filter vendor,$(1)),\
+            echo "ro.$(1).product.cpu.abilist=$(TARGET_CPU_ABI_LIST_64_BIT)" >> $(2);\
+            echo "ro.$(1).product.cpu.abilist32=" >> $(2);\
+            echo "ro.$(1).product.cpu.abilist64=$(TARGET_CPU_ABI_LIST_64_BIT)" >> $(2);\
+        )\
+    ,\
+        $(if $(filter system vendor odm,$(1)),\
+            echo "ro.$(1).product.cpu.abilist=$(TARGET_CPU_ABI_LIST)" >> $(2);\
+            echo "ro.$(1).product.cpu.abilist32=$(TARGET_CPU_ABI_LIST_32_BIT)" >> $(2);\
+            echo "ro.$(1).product.cpu.abilist64=$(TARGET_CPU_ABI_LIST_64_BIT)" >> $(2);\
+        )\
     )\
     echo "ro.$(1).build.date=`$(DATE_FROM_FILE)`" >> $(2);\
     echo "ro.$(1).build.date.utc=`$(DATE_FROM_FILE) +%s`" >> $(2);\
@@ -101,7 +109,7 @@ $(if $(filter true,$(BUILD_BROKEN_DUP_SYSPROP)),\
     $(eval _option := --allow-dup)\
 )
 
-$(2): $(POST_PROCESS_PROPS) $(INTERNAL_BUILD_ID_MAKEFILE) $(API_FINGERPRINT) $(3) $(6)
+$(2): $(POST_PROCESS_PROPS) $(INTERNAL_BUILD_ID_MAKEFILE) $(3) $(6)
 	$(hide) echo Building $$@
 	$(hide) mkdir -p $$(dir $$@)
 	$(hide) rm -f $$@ && touch $$@
@@ -131,6 +139,8 @@ endif
 	        cat $(file) >> $$@;\
 	    fi;)
 	$(hide) echo "# end of file" >> $$@
+
+$(call declare-0p-target,$(2))
 endef
 
 # -----------------------------------------------------------------
@@ -268,6 +278,7 @@ $(gen_from_buildinfo_sh): $(INTERNAL_BUILD_ID_MAKEFILE) $(API_FINGERPRINT) | $(B
 	        BOARD_BUILD_SYSTEM_ROOT_IMAGE="$(BOARD_BUILD_SYSTEM_ROOT_IMAGE)" \
 	        BOARD_USE_VBMETA_DIGTEST_IN_FINGERPRINT="$(BOARD_USE_VBMETA_DIGTEST_IN_FINGERPRINT)" \
 	        PLATFORM_VERSION="$(PLATFORM_VERSION)" \
+	        PLATFORM_DISPLAY_VERSION="$(PLATFORM_DISPLAY_VERSION)" \
 	        PLATFORM_VERSION_LAST_STABLE="$(PLATFORM_VERSION_LAST_STABLE)" \
 	        PLATFORM_SECURITY_PATCH="$(PLATFORM_SECURITY_PATCH)" \
 	        PLATFORM_BASE_OS="$(PLATFORM_BASE_OS)" \
@@ -276,6 +287,7 @@ $(gen_from_buildinfo_sh): $(INTERNAL_BUILD_ID_MAKEFILE) $(API_FINGERPRINT) | $(B
 	        PLATFORM_PREVIEW_SDK_FINGERPRINT="$$(cat $(API_FINGERPRINT))" \
 	        PLATFORM_VERSION_CODENAME="$(PLATFORM_VERSION_CODENAME)" \
 	        PLATFORM_VERSION_ALL_CODENAMES="$(PLATFORM_VERSION_ALL_CODENAMES)" \
+	        PLATFORM_VERSION_KNOWN_CODENAMES="$(PLATFORM_VERSION_KNOWN_CODENAMES)" \
 	        PLATFORM_MIN_SUPPORTED_TARGET_SDK_VERSION="$(PLATFORM_MIN_SUPPORTED_TARGET_SDK_VERSION)" \
 	        BUILD_VERSION_TAGS="$(BUILD_VERSION_TAGS)" \
 	        $(if $(OEM_THUMBPRINT_PROPERTIES),BUILD_THUMBPRINT="$(BUILD_THUMBPRINT_FROM_FILE)") \
@@ -284,6 +296,7 @@ $(gen_from_buildinfo_sh): $(INTERNAL_BUILD_ID_MAKEFILE) $(API_FINGERPRINT) | $(B
 	        TARGET_CPU_ABI_LIST_64_BIT="$(TARGET_CPU_ABI_LIST_64_BIT)" \
 	        TARGET_CPU_ABI="$(TARGET_CPU_ABI)" \
 	        TARGET_CPU_ABI2="$(TARGET_CPU_ABI2)" \
+	        ZYGOTE_FORCE_64_BIT="$(ZYGOTE_FORCE_64_BIT)" \
 	        $(PRODUCT_BUILD_PROP_OVERRIDES) \
 	        bash $(BUILDINFO_SH) > $@
 
@@ -313,10 +326,6 @@ _prop_vars_ += \
     PRODUCT_VENDOR_PROPERTIES
 endif
 
-_blacklist_names_ := \
-    $(PRODUCT_SYSTEM_PROPERTY_BLACKLIST) \
-    ro.product.first_api_level
-
 INSTALLED_BUILD_PROP_TARGET := $(TARGET_OUT)/build.prop
 
 $(eval $(call build-properties,\
@@ -324,9 +333,11 @@ $(eval $(call build-properties,\
     $(INSTALLED_BUILD_PROP_TARGET),\
     $(_prop_files_),\
     $(_prop_vars_),\
-    $(_blacklist_names_),\
+    $(PRODUCT_SYSTEM_PROPERTY_BLACKLIST),\
     $(empty),\
     $(empty)))
+
+$(eval $(call declare-1p-target,$(INSTALLED_BUILD_PROP_TARGET)))
 
 # -----------------------------------------------------------------
 # vendor/build.prop
@@ -365,6 +376,8 @@ $(eval $(call build-properties,\
     $(PRODUCT_VENDOR_PROPERTY_BLACKLIST),\
     $(empty),\
     $(empty)))
+
+$(eval $(call declare-1p-target,$(INSTALLED_VENDOR_BUILD_PROP_TARGET)))
 
 # -----------------------------------------------------------------
 # product/etc/build.prop
@@ -418,6 +431,8 @@ $(eval $(call build-properties,\
     $(_footers_),\
     $(_skip_common_properties)))
 
+$(eval $(call declare-1p-target,$(INSTALLED_PRODUCT_BUILD_PROP_TARGET)))
+
 _skip_common_properties :=
 
 # ----------------------------------------------------------------
@@ -443,6 +458,8 @@ $(eval $(call build-properties,\
     $(empty),\
     $(empty)))
 
+$(eval $(call declare-1p-target,$(INSTALLED_ODM_BUILD_PROP_TARGET)))
+
 # ----------------------------------------------------------------
 # vendor_dlkm/etc/build.prop
 #
@@ -457,6 +474,8 @@ $(eval $(call build-properties,\
     $(empty),\
     $(empty)))
 
+$(eval $(call declare-1p-target,$(INSTALLED_VENDOR_DLKM_BUILD_PROP_TARGET)))
+
 # ----------------------------------------------------------------
 # odm_dlkm/etc/build.prop
 #
@@ -470,6 +489,24 @@ $(eval $(call build-properties,\
     $(empty),\
     $(empty),\
     $(empty)))
+
+$(eval $(call declare-1p-target,$(INSTALLED_ODM_DLKM_BUILD_PROP_TARGET)))
+
+# ----------------------------------------------------------------
+# system_dlkm/build.prop
+#
+
+INSTALLED_SYSTEM_DLKM_BUILD_PROP_TARGET := $(TARGET_OUT_SYSTEM_DLKM)/etc/build.prop
+$(eval $(call build-properties,\
+    system_dlkm,\
+    $(INSTALLED_SYSTEM_DLKM_BUILD_PROP_TARGET),\
+    $(empty),\
+    $(empty),\
+    $(empty),\
+    $(empty),\
+    $(empty)))
+
+$(eval $(call declare-1p-target,$(INSTALLED_SYSTEM_DLKM_BUILD_PROP_TARGET)))
 
 # -----------------------------------------------------------------
 # system_ext/etc/build.prop
@@ -492,6 +529,8 @@ $(eval $(call build-properties,\
     $(empty),\
     $(empty)))
 
+$(eval $(call declare-1p-target,$(INSTALLED_SYSTEM_EXT_BUILD_PROP_TARGET)))
+
 # ----------------------------------------------------------------
 # ramdisk/boot/etc/build.prop
 #
@@ -506,3 +545,5 @@ $(eval $(call build-properties,\
     $(empty),\
     $(empty),\
     $(empty)))
+
+$(eval $(call declare-1p-target,$(INSTALLED_RAMDISK_BUILD_PROP_TARGET)))
